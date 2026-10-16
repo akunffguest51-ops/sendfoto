@@ -1,4 +1,17 @@
 {
-  "albums": [],
-  "generated": "2026-10-16T20:43:17.895Z"
+  "albums": [
+    {
+      "name": "liburan",
+      "cover": null,
+      "count": 1,
+      "items": [
+        {
+          "name": "bandicam 2026-10-16 21-38-56-652.mp4",
+          "path": "media/liburan/bandicam 2026-10-16 21-38-56-652.mp4",
+          "type": "video"
+        }
+      ]
+    }
+  ],
+  "generated": "2026-10-16T20:51:22.211Z"
 }
