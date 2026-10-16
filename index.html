@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>SendFoto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0e0e10;
+      --surface: #18181c;
+      --surface2: #222228;
+      --border: #2e2e38;
+      --accent: #7c6dfa;
+      --accent2: #a78bfa;
+      --text: #f0f0f5;
+      --muted: #8888a0;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    /* HEADER */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(14,14,16,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+    .logo span { color: var(--accent2); }
+
+    .back-btn {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 4px 0;
+      transition: color 0.15s;
+    }
+    .back-btn:hover { color: var(--text); }
+    .back-btn svg { width: 16px; height: 16px; }
+    .back-btn.visible { display: flex; }
+
+    .header-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+      display: none;
+    }
+    .header-title.visible { display: block; }
+
+    /* PAGES */
+    .page { display: none; padding: 24px 16px; max-width: 960px; margin: 0 auto; }
+    .page.active { display: block; }
+
+    /* ALBUM GRID */
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1.5px;
+      margin-bottom: 16px;
+    }
+
+    .album-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 14px;
+    }
+
+    .album-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .album-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+
+    .album-thumb {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .album-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .album-thumb .no-thumb {
+      font-size: 36px;
+      width: 100%;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface2);
+    }
+
+    .album-info {
+      padding: 10px 12px;
+    }
+    .album-name {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .album-count {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* MEDIA GRID */
+    .media-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+
+    .media-item {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      aspect-ratio: 1;
+      background: var(--surface2);
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.15s;
+    }
+    .media-item:hover { border-color: var(--accent); }
+    .media-item img, .media-item video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .media-badge {
+      position: absolute;
+      bottom: 6px;
+      left: 6px;
+      background: rgba(0,0,0,0.65);
+      color: #fff;
+      font-size: 10px;
+      font-family: 'Space Mono', monospace;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .media-item .play-icon {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .media-item .play-icon svg { width: 36px; height: 36px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6)); }
+
+    /* LIGHTBOX */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(0,0,0,0.95);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    #lightbox.open { display: flex; }
+
+    #lightbox .lb-top {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+      padding-top: max(14px, env(safe-area-inset-top, 14px));
+    }
+
+    .lb-filename {
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      font-family: 'Space Mono', monospace;
+      max-width: 60vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .lb-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .lb-btn {
+      background: rgba(255,255,255,0.12);
+      border: none;
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .lb-btn:hover { background: rgba(255,255,255,0.22); }
+    .lb-btn svg { width: 15px; height: 15px; }
+
+    .lb-close {
+      background: rgba(255,255,255,0.08);
+      border: none;
+      color: #fff;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: background 0.15s;
+    }
+    .lb-close:hover { background: rgba(255,255,255,0.18); }
+
+    #lightbox .lb-content {
+      max-width: 95vw;
+      max-height: 85vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #lightbox .lb-content img {
+      max-width: 95vw;
+      max-height: 85vh;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+    #lightbox .lb-content video {
+      max-width: 95vw;
+      max-height: 85vh;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .lb-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #fff;
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .lb-nav:hover { background: rgba(255,255,255,0.22); }
+    .lb-nav.prev { left: 12px; }
+    .lb-nav.next { right: 12px; }
+    .lb-nav svg { width: 18px; height: 18px; }
+
+    /* EMPTY STATE */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty .emoji { font-size: 48px; margin-bottom: 14px; }
+    .empty h3 { font-size: 16px; color: var(--text); margin-bottom: 6px; }
+    .empty p { font-size: 14px; line-height: 1.6; }
+    .empty code {
+      background: var(--surface2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--accent2);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .album-card, .media-item { transition: none; }
+    }
+
+    @media (max-width: 480px) {
+      .album-grid { grid-template-columns: repeat(2, 1fr); }
+      .media-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <button class="back-btn" id="backBtn" onclick="goHome()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    Semua Album
+  </button>
+  <span class="logo" id="logoText">Send<span>Foto</span></span>
+  <span class="header-title" id="headerTitle"></span>
+</header>
+
+<!-- HOME: Album List -->
+<div class="page active" id="pageHome">
+  <p class="section-label">ALBUM</p>
+  <div class="album-grid" id="albumGrid"></div>
+</div>
+
+<!-- ALBUM: Media Grid -->
+<div class="page" id="pageAlbum">
+  <div class="media-grid" id="mediaGrid"></div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox">
+  <div class="lb-top">
+    <span class="lb-filename" id="lbFilename"></span>
+    <div class="lb-actions">
+      <a class="lb-btn" id="lbDownload" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download
+      </a>
+      <button class="lb-close" onclick="closeLightbox()">✕</button>
+    </div>
+  </div>
+
+  <button class="lb-nav prev" onclick="navLightbox(-1)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+
+  <div class="lb-content" id="lbContent"></div>
+
+  <button class="lb-nav next" onclick="navLightbox(1)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 6 15 12 9 18"/></svg>
+  </button>
+</div>
+
+<script>
+  let albums = [];
+  let currentAlbum = null;
+  let currentIndex = 0;
+
+  async function loadManifest() {
+    try {
+      const res = await fetch('/manifest.json?t=' + Date.now());
+      const data = await res.json();
+      albums = data.albums || [];
+      renderHome();
+    } catch(e) {
+      document.getElementById('albumGrid').innerHTML = `
+        <div class="empty" style="grid-column:1/-1">
+          <div class="emoji">📂</div>
+          <h3>manifest.json belum ada</h3>
+          <p>Jalankan <code>node generate-manifest.js</code> dulu ya!</p>
+        </div>`;
+    }
+  }
+
+  function renderHome() {
+    const grid = document.getElementById('albumGrid');
+    if (!albums.length) {
+      grid.innerHTML = `
+        <div class="empty" style="grid-column:1/-1">
+          <div class="emoji">🖼️</div>
+          <h3>Belum ada album</h3>
+          <p>Buat folder di <code>media/</code>, isi foto/video, lalu jalankan <code>node generate-manifest.js</code></p>
+        </div>`;
+      return;
+    }
+    grid.innerHTML = albums.map((a, i) => `
+      <div class="album-card" onclick="openAlbum(${i})">
+        <div class="album-thumb">
+          ${a.cover
+            ? `<img src="${a.cover}" alt="${a.name}" loading="lazy" />`
+            : `<div class="no-thumb">📁</div>`}
+        </div>
+        <div class="album-info">
+          <div class="album-name">${a.name}</div>
+          <div class="album-count">${a.count} file</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function openAlbum(i) {
+    currentAlbum = albums[i];
+    document.getElementById('pageHome').classList.remove('active');
+    document.getElementById('pageAlbum').classList.add('active');
+    document.getElementById('backBtn').classList.add('visible');
+    document.getElementById('logoText').style.display = 'none';
+    document.getElementById('headerTitle').textContent = currentAlbum.name;
+    document.getElementById('headerTitle').classList.add('visible');
+    renderMediaGrid();
+  }
+
+  function renderMediaGrid() {
+    const grid = document.getElementById('mediaGrid');
+    grid.innerHTML = currentAlbum.items.map((item, i) => `
+      <div class="media-item" onclick="openLightbox(${i})">
+        ${item.type === 'image'
+          ? `<img src="${item.path}" alt="${item.name}" loading="lazy" />`
+          : `<video src="${item.path}" preload="metadata" muted playsinline></video>
+             <div class="play-icon"><svg viewBox="0 0 24 24" fill="white"><circle cx="12" cy="12" r="10" fill="rgba(0,0,0,0.5)"/><polygon points="10,8 16,12 10,16" fill="white"/></svg></div>
+             <span class="media-badge">VIDEO</span>`
+        }
+      </div>
+    `).join('');
+  }
+
+  function goHome() {
+    document.getElementById('pageAlbum').classList.remove('active');
+    document.getElementById('pageHome').classList.add('active');
+    document.getElementById('backBtn').classList.remove('visible');
+    document.getElementById('logoText').style.display = '';
+    document.getElementById('headerTitle').classList.remove('visible');
+    currentAlbum = null;
+  }
+
+  function openLightbox(i) {
+    currentIndex = i;
+    showLightboxItem();
+    document.getElementById('lightbox').classList.add('open');
+    document.addEventListener('keydown', handleKey);
+  }
+
+  function showLightboxItem() {
+    const item = currentAlbum.items[currentIndex];
+    const content = document.getElementById('lbContent');
+    document.getElementById('lbFilename').textContent = item.name;
+    document.getElementById('lbDownload').href = item.path;
+    document.getElementById('lbDownload').download = item.name;
+
+    if (item.type === 'image') {
+      content.innerHTML = `<img src="${item.path}" alt="${item.name}" />`;
+    } else {
+      content.innerHTML = `<video src="${item.path}" controls autoplay playsinline style="max-width:95vw;max-height:85vh"></video>`;
+    }
+  }
+
+  function navLightbox(dir) {
+    const total = currentAlbum.items.length;
+    currentIndex = (currentIndex + dir + total) % total;
+    showLightboxItem();
+  }
+
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.getElementById('lbContent').innerHTML = '';
+    document.removeEventListener('keydown', handleKey);
+  }
+
+  function handleKey(e) {
+    if (e.key === 'ArrowRight') navLightbox(1);
+    if (e.key === 'ArrowLeft') navLightbox(-1);
+    if (e.key === 'Escape') closeLightbox();
+  }
+
+  // Swipe support mobile
+  let touchStartX = 0;
+  document.getElementById('lightbox').addEventListener('touchstart', e => touchStartX = e.touches[0].clientX);
+  document.getElementById('lightbox').addEventListener('touchend', e => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) navLightbox(diff > 0 ? 1 : -1);
+  });
+
+  loadManifest();
+</script>
+</body>
+</html>
