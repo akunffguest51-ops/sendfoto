@@ -13,6 +13,11 @@ function getType(ext) {
 
 const albums = [];
 
+if (!fs.existsSync(MEDIA_DIR)) {
+  console.log(`⚠️  Folder ${MEDIA_DIR} tidak ditemukan — membuat folder kosong`);
+  fs.mkdirSync(MEDIA_DIR, { recursive: true });
+}
+
 const albumFolders = fs.readdirSync(MEDIA_DIR).filter((name) => {
   return fs.statSync(path.join(MEDIA_DIR, name)).isDirectory();
 });
